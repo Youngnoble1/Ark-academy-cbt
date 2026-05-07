@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a student or teacher in the academy.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "name": { "type": "string", "description": "The full name of the user." },
+        "email": { "type": "string", "description": "The email address of the user." },
+        "role": { "type": "string", "enum": ["student", "teacher"], "description": "The role of the user." },
+        "classLevel": { "type": "string", "enum": ["Primary 3", "JSS 3", "SS 1"], "description": "The class level of the student." },
+        "department": { "type": "string", "enum": ["Science", "Arts", "Commercial"], "description": "The department for SS 1 students." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role", "createdAt"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "Represents a computer-based test.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subject": { "type": "string" },
+        "classLevel": { "type": "string" },
+        "topics": { "type": "array", "items": { "type": "string" } },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "correctAnswer": { "type": "number" },
+              "explanation": { "type": "string" }
+            }
+          }
+        },
+        "timeLimit": { "type": "number", "description": "Time limit in minutes." },
+        "creatorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Result": {
+      "title": "Result",
+      "description": "Represents the outcome of a quiz taken by a student.",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "questionId": { "type": "string" },
+              "selectedOption": { "type": "number" },
+              "isCorrect": { "type": "boolean" }
+            }
+          }
+        },
+        "feedback": { "type": "string" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "Learning materials for students.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "subject": { "type": "string" },
+        "classLevel": { "type": "string" },
+        "type": { "type": "string", "enum": ["article", "link", "file"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Collection of students and teachers."
+    },
+    "quizzes": {
+      "schema": "Quiz",
+      "description": "Collection of CBT quizzes."
+    },
+    "results": {
+      "schema": "Result",
+      "description": "Collection of student quiz results."
+    },
+    "resources": {
+      "schema": "Resource",
+      "description": "Collection of learning resources."
+    }
+  }
+}
