@@ -11,34 +11,80 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, GraduationCap, History, PlayCircle, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { BookOpen, GraduationCap, History, PlayCircle, TrendingUp, CheckCircle2, Clock, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { SYLLABUS } from "@/src/constants";
 
 export default function Dashboard() {
-  const { profile, results } = useProfile();
+  const { profile, results, quizzes } = useProfile();
   const navigate = useNavigate();
 
+  const globalQuizzes = quizzes.filter(q => q.isGlobal);
+
   const averageScore = results.length > 0 
-    ? Math.round(results.reduce((acc, r) => acc + (r.score / r.totalQuestions) * 100, 0) / results.length)
+    ? Math.round(results.reduce((acc, r) => acc + (r.score / (r.maxScore || r.totalQuestions)) * 100, 0) / results.length)
     : 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 font-sans">Welcome, {profile?.name}!</h1>
-          <p className="text-slate-500">
-            {profile?.classLevel} {profile?.department ? `• ${profile.department}` : ""}
+          <h1 className="text-4xl font-black text-slate-900 font-sans tracking-tight">Level {profile?.classLevel} Console</h1>
+          <p className="text-slate-500 font-medium font-sans">
+            Welcome back, {profile?.name}. Current mastery: <span className="text-blue-600 font-black">{averageScore}%</span>
           </p>
         </div>
-        <Button onClick={() => navigate("/quiz/new")} className="gap-2 shadow-lg shadow-blue-600/20">
-          <PlayCircle className="w-4 h-4" />
-          Take New Test
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => navigate("/challenge")} className="gap-2 border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl font-black h-12 shadow-md shadow-amber-600/5">
+            <Trophy className="w-4 h-4" />
+            Ranked Challenge
+          </Button>
+          <Button onClick={() => navigate("/quiz/new")} className="gap-2 shadow-xl shadow-blue-600/20 rounded-xl font-black bg-blue-600 h-12 px-6">
+            <PlayCircle className="w-4 h-4" />
+            Personal Assessment
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {globalQuizzes.length > 0 && (
+        <section className="mb-12">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="bg-red-600 p-2 rounded-xl text-white">
+                <Clock className="w-5 h-5" />
+             </div>
+             <h2 className="text-2xl font-black text-slate-900 tracking-tight underline decoration-red-600/30 decoration-4 underline-offset-4">Assigned Examinations</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {globalQuizzes.map(quiz => (
+              <Card key={quiz.id} className="border-none shadow-xl shadow-slate-200/40 rounded-3xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
+                <CardHeader className="bg-slate-900 text-white pb-6 pt-8 relative">
+                   <Badge className="absolute top-4 right-4 bg-red-600 border-none font-black text-[10px] uppercase tracking-widest px-2 py-1">Required</Badge>
+                   <CardTitle className="text-2xl font-black line-clamp-1 group-hover:text-blue-400 transition-colors uppercase tracking-tight">{quiz.title}</CardTitle>
+                   <CardDescription className="text-slate-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2 mt-2">
+                     <BookOpen className="w-3 h-3" /> {quiz.subject} • {quiz.timeLimit} Minutes
+                   </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                   <div className="space-y-4 mb-6">
+                      <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-slate-400">
+                         <span>Format</span>
+                         <span className="text-slate-900">{quiz.questions.length} MCQ + {quiz.theoryQuestions?.length || 0} Theory</span>
+                      </div>
+                      <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                         <div className="h-full bg-blue-500 w-1/3" />
+                      </div>
+                   </div>
+                   <Button onClick={() => navigate(`/quiz/${quiz.id}`)} className="w-full bg-slate-900 group-hover:bg-blue-600 transition-colors rounded-2xl h-12 font-black">
+                     Begin Examination
+                   </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <StatCard title="Overall Progress" value={`${averageScore}%`} icon={<TrendingUp className="text-blue-600" />} progress={averageScore} />
         <StatCard title="Quizzes Completed" value={results.length.toString()} icon={<CheckCircle2 className="text-green-600" />} />
         <StatCard title="Learning Resources" value="12" icon={<BookOpen className="text-purple-600" />} />

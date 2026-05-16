@@ -39,18 +39,21 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 {profile ? (
                   <Button size="lg" className="text-xl px-10 h-16 font-black rounded-2xl shadow-2xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all hover:scale-105 group" onClick={() => navigate("/dashboard")}>
-                    Go to My Dashboard
+                    {profile.isAdmin ? "Admin Dashboard" : "Go to My Dashboard"}
                     <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 ) : (
-                  <Button size="lg" className="text-xl px-10 h-16 font-black rounded-2xl shadow-2xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all hover:scale-105 group" onClick={() => navigate("/onboarding")}>
-                    Create Student Profile
-                    <GraduationCap className="ml-2 w-6 h-6" />
-                  </Button>
+                  <>
+                    <Button size="lg" className="text-xl px-10 h-16 font-black rounded-2xl shadow-2xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all hover:scale-105 group" onClick={() => navigate("/onboarding")}>
+                      Student Access
+                      <GraduationCap className="ml-2 w-6 h-6" />
+                    </Button>
+                    <Button variant="outline" size="lg" className="text-xl px-8 h-16 font-bold border-2 border-slate-200 rounded-2xl hover:bg-slate-50 text-slate-700" onClick={() => navigate("/onboarding?tab=admin")}>
+                      Admin Access
+                      <ShieldCheck className="ml-2 w-6 h-6" />
+                    </Button>
+                  </>
                 )}
-                <Button variant="ghost" size="lg" className="text-lg px-8 h-16 font-bold text-slate-400 hover:text-slate-900">
-                  Explore Syllabus
-                </Button>
               </div>
             </motion.div>
           </div>
@@ -68,7 +71,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-black text-slate-900 mb-6 tracking-tight">Everything You Need To Excel</h2>
-            <p className="text-slate-500 text-lg font-medium max-w-xl mx-auto leading-relaxed">No accounts needed. Your progress is stored right here on your device for maximum privacy and speed.</p>
+            <p className="text-slate-500 text-lg font-medium max-w-xl mx-auto leading-relaxed">Local-first for speed, cloud-ready for peace of mind. Your progress is always safe.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">

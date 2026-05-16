@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 0. Global safety net: Default deny all
+    // 0. Global safety net
     match /{document=**} {
       allow read, write: if false;
     }
@@ -10,70 +10,80 @@ service cloud.firestore {
     // --- Helpers ---
     function isSignedIn() { return request.auth != null; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
-    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
+    
+    function isAdmin() { 
+      return isSignedIn() && 
+             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true || 
+              request.auth.token.email == 'nonsookoli757@gmail.com');
+    }
 
-    // --- Validation Helpers ---
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    // --- Validation Blueprints ---
     
     function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'name', 'email', 'role', 'createdAt']) &&
+      return data.keys().hasAll(['uid', 'name', 'classLevel', 'createdAt']) &&
              data.uid == request.auth.uid &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
-             data.email is string && data.email.size() <= 100 &&
-             data.role in ['student', 'teacher'] &&
-             data.createdAt == request.time;
+             data.name is string && data.name.size() > 0 &&
+             data.classLevel is string &&
+             data.createdAt is string;
     }
 
     function isValidQuiz(data) {
-      return data.keys().hasAll(['title', 'subject', 'classLevel', 'questions', 'creatorId', 'createdAt']) &&
-             data.title is string && data.title.size() <= 200 &&
+      return data.keys().hasAll(['title', 'subject', 'classLevel', 'questions', 'timeLimit', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 &&
              data.subject is string &&
              data.classLevel is string &&
-             data.questions is list && data.questions.size() > 0 && data.questions.size() <= 50 &&
-             data.creatorId == request.auth.uid &&
-             data.createdAt == request.time;
+             data.questions is list &&
+             data.timeLimit is int &&
+             data.createdAt is string;
     }
 
     function isValidResult(data) {
-      return data.keys().hasAll(['quizId', 'studentId', 'score', 'totalQuestions', 'completedAt']) &&
-             data.quizId is string &&
-             data.studentId == request.auth.uid &&
-             data.score is int && data.score >= 0 && data.score <= data.totalQuestions &&
+      return data.keys().hasAll(['userId', 'userName', 'quizTitle', 'score', 'totalQuestions', 'maxScore', 'completedAt']) &&
+             data.userId == request.auth.uid &&
+             data.score is int &&
+             data.totalQuestions is int &&
+             data.maxScore is int &&
+             data.completedAt is timestamp &&
              data.completedAt == request.time;
     }
 
-    // --- Collection Rules ---
+    // --- Collections ---
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow list: if false; // Prevent bulk user scraping
       allow create: if isOwner(userId) && isValidUser(incoming());
-      allow update: if isOwner(userId) && 
-                      isValidUser(incoming()) && 
-                      incoming().role == existing().role &&
-                      incoming().createdAt == existing().createdAt &&
-                      incoming().diff(existing()).affectedKeys().hasOnly(['name', 'classLevel', 'department', 'onboardingComplete']);
+      allow update: if isOwner(userId) && (
+        // Prevent changing immutable fields and self-elevating isAdmin
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        (incoming().isAdmin == existing().isAdmin || isAdmin())
+      );
     }
 
     match /quizzes/{quizId} {
-      allow list: if isSignedIn();
-      allow get: if isSignedIn();
-      allow create: if isSignedIn() && isValidQuiz(incoming());
-      allow update: if false; // Quizzes are currently immutable for students/teachers
-      allow delete: if false;
+      allow list, get: if true; // Allowed for public browsing/testing, write restricted
+      allow create: if isAdmin() && isValidQuiz(incoming());
+      allow update: if isAdmin() && isValidQuiz(incoming());
+      allow delete: if isAdmin();
     }
 
     match /results/{resultId} {
-      allow list: if isSignedIn() && (resource.data.studentId == request.auth.uid);
-      allow get: if isSignedIn() && resource.data.studentId == request.auth.uid;
+      // Students can list their own results, Admins can list all
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      
       allow create: if isSignedIn() && isValidResult(incoming());
-      allow update, delete: if false; // Results are immutable once submitted
+      allow update, delete: if isAdmin();
     }
 
-    match /resources/{resourceId} {
-      allow list, get: if isSignedIn();
-      allow write: if false; // System only for now
+    match /_internal_/{docId} {
+      allow get: if true; // Publicly accessible for connectivity checks
     }
   }
 }

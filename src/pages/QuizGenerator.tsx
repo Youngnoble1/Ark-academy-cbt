@@ -46,7 +46,8 @@ export default function QuizGenerator() {
 
       toast.info("AI is generating your questions...", { duration: 5000 });
       
-      const questions = await generateQuizQuestions(subject, profile!.classLevel, topics, 10);
+      // Request 10 MCQ and 2 Theory for practice
+      const data = await generateQuizQuestions(subject, profile!.classLevel, topics, 10, 2);
       
       const quiz = {
         id: uuidv4(),
@@ -54,8 +55,9 @@ export default function QuizGenerator() {
         subject,
         classLevel: profile!.classLevel,
         topics: topics.slice(0, 3),
-        questions,
-        timeLimit: 15,
+        questions: data.questions,
+        theoryQuestions: data.theoryQuestions,
+        timeLimit: 30, // 30 mins for practice
         createdAt: new Date().toISOString(),
       };
 

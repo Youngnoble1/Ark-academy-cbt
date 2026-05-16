@@ -2,22 +2,22 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "Represents a student or teacher in the academy.",
+      "description": "Represents a student or administrator in the academy.",
       "type": "object",
       "properties": {
-        "uid": { "type": "string", "description": "The unique identifier for the user." },
-        "name": { "type": "string", "description": "The full name of the user." },
-        "email": { "type": "string", "description": "The email address of the user." },
-        "role": { "type": "string", "enum": ["student", "teacher"], "description": "The role of the user." },
-        "classLevel": { "type": "string", "enum": ["Primary 3", "JSS 3", "SS 1"], "description": "The class level of the student." },
-        "department": { "type": "string", "enum": ["Science", "Arts", "Commercial"], "description": "The department for SS 1 students." },
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "classLevel": { "type": "string" },
+        "department": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "name", "email", "role", "createdAt"]
+      "required": ["uid", "name", "classLevel", "createdAt"]
     },
     "Quiz": {
       "title": "Quiz",
-      "description": "Represents a computer-based test.",
+      "description": "Represents an examination module.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -25,60 +25,31 @@
         "subject": { "type": "string" },
         "classLevel": { "type": "string" },
         "topics": { "type": "array", "items": { "type": "string" } },
-        "questions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "text": { "type": "string" },
-              "options": { "type": "array", "items": { "type": "string" } },
-              "correctAnswer": { "type": "number" },
-              "explanation": { "type": "string" }
-            }
-          }
-        },
-        "timeLimit": { "type": "number", "description": "Time limit in minutes." },
-        "creatorId": { "type": "string" },
+        "questions": { "type": "array" },
+        "theoryQuestions": { "type": "array" },
+        "timeLimit": { "type": "number" },
+        "isGlobal": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
-      }
+      },
+      "required": ["title", "subject", "classLevel", "questions", "timeLimit", "createdAt"]
     },
     "Result": {
       "title": "Result",
-      "description": "Represents the outcome of a quiz taken by a student.",
+      "description": "Student exam performance record.",
       "type": "object",
       "properties": {
-        "quizId": { "type": "string" },
-        "studentId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "quizTitle": { "type": "string" },
+        "subject": { "type": "string" },
         "score": { "type": "number" },
         "totalQuestions": { "type": "number" },
-        "answers": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "questionId": { "type": "string" },
-              "selectedOption": { "type": "number" },
-              "isCorrect": { "type": "boolean" }
-            }
-          }
-        },
+        "maxScore": { "type": "number" },
+        "completedAt": { "type": "string", "format": "date-time" },
         "feedback": { "type": "string" },
-        "completedAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Resource": {
-      "title": "Resource",
-      "description": "Learning materials for students.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "subject": { "type": "string" },
-        "classLevel": { "type": "string" },
-        "type": { "type": "string", "enum": ["article", "link", "file"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
+        "answers": { "type": "array" }
+      },
+      "required": ["userId", "userName", "quizTitle", "score", "totalQuestions", "maxScore", "completedAt"]
     }
   },
   "firestore": {

@@ -13,7 +13,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, BookOpen, LayoutDashboard, Settings, UserPlus, LogOut, ShieldCheck } from "lucide-react";
+import { User, BookOpen, LayoutDashboard, Settings, UserPlus, LogOut, ShieldCheck, Trophy } from "lucide-react";
+import { toast } from "sonner";
 
 export function Navbar() {
   const { profile, logout } = useProfile();
@@ -23,8 +24,9 @@ export function Navbar() {
     try {
       await logout();
       navigate("/");
+      toast.success("Profile cleared successfully");
     } catch (error) {
-      console.error("Logout error", error);
+      console.error("Session reset error", error);
     }
   };
 
@@ -58,6 +60,12 @@ export function Navbar() {
                     </Button>
                   </Link>
                 )}
+                <Link to="/challenge" className="hidden sm:block">
+                  <Button variant="ghost" size="sm" className="gap-2 text-amber-600">
+                    <Trophy className="w-4 h-4" />
+                    Challenge Mode
+                  </Button>
+                </Link>
                 <Link to="/resources" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <BookOpen className="w-4 h-4" />
@@ -82,6 +90,10 @@ export function Navbar() {
                       <LayoutDashboard className="w-4 h-4 mr-2" />
                       Dashboard
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/challenge")} className="text-amber-600">
+                      <Trophy className="w-4 h-4 mr-2" />
+                      Challenge Mode
+                    </DropdownMenuItem>
                     {profile.isAdmin && (
                       <DropdownMenuItem onClick={() => navigate("/admin")} className="text-blue-600">
                         <ShieldCheck className="w-4 h-4 mr-2" />
@@ -99,7 +111,7 @@ export function Navbar() {
                     <div className="h-px bg-slate-100 my-1" />
                     <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                       <LogOut className="w-4 h-4 mr-2" />
-                      Log Out
+                      Exit & Clear Profile
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
