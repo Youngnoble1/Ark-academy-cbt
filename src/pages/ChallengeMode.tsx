@@ -27,7 +27,6 @@ export default function ChallengeMode() {
   // MCQ state
   const [currentMCQIndex, setCurrentMCQIndex] = useState(0);
   const [mcqAnswers, setMCQAnswers] = useState<Record<number, string>>({});
-  const [showMCQFeedback, setShowMCQFeedback] = useState(false);
   
   // Theory state
   const [currentTheoryIndex, setCurrentTheoryIndex] = useState(0);
@@ -41,19 +40,21 @@ export default function ChallengeMode() {
     if (!selectedSubject) return;
     setIsStarted(true);
     setCurrentSubjectStep("mcq");
+    setCurrentMCQIndex(0);
+    setCurrentTheoryIndex(0);
+    setMCQAnswers({});
+    setTheoryAnswers({});
+    setIsFinished(false);
   };
 
   const handleMCQAnswer = (answer: string) => {
-    if (showMCQFeedback) return;
     setMCQAnswers(prev => ({ ...prev, [currentMCQIndex]: answer }));
-    setShowMCQFeedback(true);
   };
 
   const nextMCQ = () => {
     if (!subjectData) return;
     if (currentMCQIndex < subjectData.mcqs.length - 1) {
       setCurrentMCQIndex(prev => prev + 1);
-      setShowMCQFeedback(false);
     } else {
       setCurrentSubjectStep("theory");
     }
@@ -151,7 +152,7 @@ export default function ChallengeMode() {
           <h1 className="text-3xl font-black text-slate-900 mb-2">Challenge Completed!</h1>
           <p className="text-slate-500 mb-8 font-medium">Excellent work on the {selectedSubject} challenge.</p>
           
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-4 mb-12">
             <Card className="border-none bg-slate-50 p-6 rounded-3xl">
               <div className="text-3xl font-black text-slate-900">{mcqScore} / {totalMCQs}</div>
               <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Objective Score</div>
@@ -161,12 +162,67 @@ export default function ChallengeMode() {
               <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Accuracy</div>
             </Card>
           </div>
+
+          <div className="text-left space-y-6 mb-12">
+            <h2 className="text-2xl font-black text-slate-900 px-2">Detailed Review</h2>
+            <div className="space-y-4">
+              {subjectData?.mcqs.map((q, idx) => {
+                const isCorrect = mcqAnswers[idx] === q.correctAnswer;
+                return (
+                  <div key={idx} className={`p-6 rounded-3xl border ${isCorrect ? "bg-green-50/30 border-green-100" : "bg-red-50/30 border-red-100"}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="font-bold text-slate-900">{idx + 1}. {q.question}</p>
+                      {isCorrect ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div className="p-3 bg-white rounded-xl border border-slate-100">
+                        <span className="text-[10px] font-black text-slate-400 uppercase block mb-1">Your Answer</span>
+                        <span className={isCorrect ? "text-green-700 font-bold" : "text-red-700 font-bold"}>{mcqAnswers[idx] || "No answer"}</span>
+                      </div>
+                      {!isCorrect && (
+                        <div className="p-3 bg-green-100 border border-green-200 rounded-xl">
+                          <span className="text-[10px] font-black text-green-600 uppercase block mb-1">Correct Answer</span>
+                          <span className="text-green-800 font-black">{q.correctAnswer}</span>
+                        </div>
+                      )}
+                    </div>
+                    {q.explanation && (
+                      <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-xs text-blue-700 leading-relaxed italic">
+                        {q.explanation}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           
-          <div className="bg-blue-50 border border-blue-100 p-6 rounded-3xl mb-8 flex items-start gap-4 text-left">
+          <div className="bg-blue-50 border border-blue-100 p-8 rounded-[2.5rem] mb-12 flex items-start gap-4 text-left shadow-sm">
             <AlertCircle className="w-6 h-6 text-blue-600 shrink-0" />
             <div>
-              <p className="text-blue-900 font-bold mb-1">Theory Review</p>
-              <p className="text-sm text-blue-700/80">Your 5 theory responses have been recorded. Ask your teacher or use the Ark Academy AI assistant to grade your specific long-form answers.</p>
+              <p className="text-blue-900 font-black mb-1">Theory Reference</p>
+              <p className="text-sm text-blue-700/80 leading-relaxed">
+                Your performance in the Objective section was {percentage}%. Compare your theory answers against the curriculum benchmarks below.
+              </p>
+              <div className="mt-6 space-y-6">
+                {subjectData?.theory.map((q, idx) => (
+                  <div key={idx} className="bg-white/50 p-6 rounded-2xl border border-blue-100">
+                    <p className="font-bold text-slate-900 mb-2">{q.question}</p>
+                    <div className="mb-4">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Your Answer</span>
+                      <p className="text-sm text-slate-600 whitespace-pre-wrap mt-1">{theoryAnswers[idx] || "Not answered"}</p>
+                    </div>
+                    <div className="pt-4 border-t border-blue-100/50">
+                      <span className="text-[10px] font-bold text-green-600 uppercase">Ideal Guide</span>
+                      <p className="text-xs text-slate-500 italic mt-1">{q.answerKey}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -240,20 +296,11 @@ export default function ChallengeMode() {
                   >
                     {subjectData?.mcqs[currentMCQIndex].options.map((option, idx) => {
                        const isSelected = mcqAnswers[currentMCQIndex] === option;
-                       const isCorrect = option === subjectData.mcqs[currentMCQIndex].correctAnswer;
                        
                        let bgColor = "bg-slate-50";
                        let borderColor = "border-slate-100";
                        
-                       if (showMCQFeedback) {
-                         if (isCorrect) {
-                           bgColor = "bg-green-50";
-                           borderColor = "border-green-200";
-                         } else if (isSelected && !isCorrect) {
-                           bgColor = "bg-red-50";
-                           borderColor = "border-red-200";
-                         }
-                       } else if (isSelected) {
+                       if (isSelected) {
                          borderColor = "border-blue-600";
                          bgColor = "bg-blue-50";
                        }
@@ -271,29 +318,12 @@ export default function ChallengeMode() {
                                 </span>
                                 {option}
                               </div>
-                              {showMCQFeedback && (
-                                isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : (isSelected ? <XCircle className="w-5 h-5 text-red-600" /> : null)
-                              )}
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-blue-600 shadow-sm" />}
                             </Label>
                          </div>
                        );
                     })}
                   </RadioGroup>
-
-                  {showMCQFeedback && subjectData?.mcqs[currentMCQIndex].explanation && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }} 
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="mt-6 p-6 bg-blue-50 rounded-2xl border border-blue-100"
-                    >
-                      <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1 flex items-center">
-                         <AlertCircle className="w-3 h-3 mr-1" /> AI Explanation
-                      </p>
-                      <p className="text-sm text-blue-900 font-medium">
-                        {subjectData.mcqs[currentMCQIndex].explanation}
-                      </p>
-                    </motion.div>
-                  )}
                </CardContent>
                <CardFooter className="p-8 pt-0 flex justify-end">
                   <Button 
